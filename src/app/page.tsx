@@ -1,103 +1,210 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import OpenAI from 'openai';
+import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
+
+type RelationshipType = '헤어졌어요' | '연락은 하지만 무슨 사이인지 모르겠어요' | '연애중이지만 불안해요' | '짝사랑이예요';
+type Gender = 'female' | 'male';
+
+interface CounselingForm {
+  readingTitle: string;
+  gender: Gender;
+  birthDate: string;
+  birthPlace: string;
+  relationshipType: RelationshipType;
+  situation: string;
+  systemPrompt: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [form, setForm] = useState<CounselingForm>({
+    readingTitle: '',
+    gender: 'female',
+    birthDate: '',
+    birthPlace: '대한민국 서울',
+    relationshipType: '연애중이지만 불안해요',
+    situation: '',
+    systemPrompt: '',
+  });
+  const [response, setResponse] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.situation.trim() || !form.systemPrompt.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const openai = new OpenAI({
+        apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const userPrompt = `[리딩 주제]
+${form.readingTitle}
+[생년월일 정보]
+- 성별: ${form.gender}
+- 생년월일: ${form.birthDate}
+- 출생지: ${form.birthPlace}
+[관계의 유형]
+${form.relationshipType}
+[상황 설명]
+${form.situation}`;
+
+      const requestData = {
+        messages: [
+          { role: "system" as const, content: form.systemPrompt },
+          { role: "user" as const, content: userPrompt }
+        ],
+        model: "gpt-4",
+        max_tokens: 2000,
+        temperature: 0.85,
+      };
+
+      console.log('GPT API 요청 데이터:', JSON.stringify(requestData, null, 2));
+
+      const completion = await openai.chat.completions.create(requestData);
+
+      setResponse(completion.choices[0].message.content || '');
+    } catch (error) {
+      console.error('Error:', error);
+      setResponse('죄송합니다. 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
+          상담 채팅
+        </h1>
+        
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  시스템 프롬프트
+                </label>
+                <textarea
+                  name="systemPrompt"
+                  value={form.systemPrompt}
+                  onChange={handleInputChange}
+                  placeholder="시스템 프롬프트를 입력하세요..."
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  리딩 제목
+                </label>
+                <input
+                  type="text"
+                  name="readingTitle"
+                  value={form.readingTitle}
+                  onChange={handleInputChange}
+                  placeholder="리딩 제목을 입력하세요"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    성별
+                  </label>
+                  <select
+                    name="gender"
+                    value={form.gender}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="female">여성</option>
+                    <option value="male">남성</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    생년월일
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="birthDate"
+                    value={form.birthDate}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  관계 유형
+                </label>
+                <select
+                  name="relationshipType"
+                  value={form.relationshipType}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="헤어졌어요">헤어졌어요</option>
+                  <option value="연락은 하지만 무슨 사이인지 모르겠어요">연락은 하지만 무슨 사이인지 모르겠어요</option>
+                  <option value="연애중이지만 불안해요">연애중이지만 불안해요</option>
+                  <option value="짝사랑이예요">짝사랑이예요</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  상황 설명
+                </label>
+                <textarea
+                  name="situation"
+                  value={form.situation}
+                  onChange={handleInputChange}
+                  placeholder="상황을 자세히 설명해주세요..."
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[150px]"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <PaperAirplaneIcon className="h-5 w-5" />
+              상담 시작하기
+            </button>
+          </form>
+
+          {isLoading && (
+            <div className="mt-4 text-center text-gray-600">
+              응답을 생성하는 중...
+            </div>
+          )}
+
+          {response && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">상담 결과:</h2>
+              <p className="text-gray-700 whitespace-pre-wrap">{response}</p>
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }
