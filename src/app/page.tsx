@@ -57,7 +57,7 @@ ${form.situation}`;
           { role: "system" as const, content: form.systemPrompt },
           { role: "user" as const, content: userPrompt }
         ],
-        model: "gpt-4",
+        model: "gpt-4o-mini",
         max_tokens: 2000,
         temperature: 0.85,
       };
