@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 
 type RelationshipType = '헤어졌어요' | '연락은 하지만 무슨 사이인지 모르겠어요' | '연애중이지만 불안해요' | '짝사랑이예요';
@@ -36,9 +36,8 @@ export default function Home() {
 
     setIsLoading(true);
     try {
-      const openai = new OpenAI({
-        apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-        dangerouslyAllowBrowser: true,
+      const genAI = new GoogleGenAI({
+        apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
       });
 
       const userPrompt = `[리딩 주제]
@@ -52,21 +51,16 @@ ${form.relationshipType}
 [상황 설명]
 ${form.situation}`;
 
-      const requestData = {
-        messages: [
-          { role: "system" as const, content: form.systemPrompt },
-          { role: "user" as const, content: userPrompt }
-        ],
-        model: "gpt-4o-mini",
-        max_tokens: 2000,
-        temperature: 0.85,
-      };
-
-      console.log('GPT API 요청 데이터:', JSON.stringify(requestData, null, 2));
-
-      const completion = await openai.chat.completions.create(requestData);
-
-      setResponse(completion.choices[0].message.content || '');
+      const prompt = `${form.systemPrompt}\n${userPrompt}`;
+      const model = 'gemini-2.5-flash';
+      const result = await genAI.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          temperature: 0.85,
+        },
+      });
+      setResponse(result.text || '');
     } catch (error) {
       console.error('Error:', error);
       setResponse('죄송합니다. 오류가 발생했습니다.');
