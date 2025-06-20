@@ -9,9 +9,12 @@ type Gender = 'female' | 'male';
 
 interface CounselingForm {
   readingTitle: string;
-  gender: Gender;
-  birthDate: string;
-  birthPlace: string;
+  myGender: Gender;
+  myBirthDate: string;
+  myBirthPlace: string;
+  partnerGender: Gender;
+  partnerBirthDate: string;
+  partnerBirthPlace: string;
   relationshipType: RelationshipType;
   situation: string;
   systemPrompt: string;
@@ -20,9 +23,12 @@ interface CounselingForm {
 export default function Home() {
   const [form, setForm] = useState<CounselingForm>({
     readingTitle: '',
-    gender: 'female',
-    birthDate: '',
-    birthPlace: '대한민국 서울',
+    myGender: 'female',
+    myBirthDate: '',
+    myBirthPlace: '대한민국 서울',
+    partnerGender: 'male',
+    partnerBirthDate: '',
+    partnerBirthPlace: '대한민국 서울',
     relationshipType: '연애중이지만 불안해요',
     situation: '',
     systemPrompt: '',
@@ -42,12 +48,20 @@ export default function Home() {
 
       const userPrompt = `[리딩 주제]
 ${form.readingTitle}
-[생년월일 정보]
-- 성별: ${form.gender}
-- 생년월일: ${form.birthDate}
-- 출생지: ${form.birthPlace}
+
+[내 정보]
+- 성별: ${form.myGender}
+- 생년월일: ${form.myBirthDate}
+- 출생지: ${form.myBirthPlace}
+
+[상대방 정보]
+- 성별: ${form.partnerGender}
+- 생년월일: ${form.partnerBirthDate}
+- 출생지: ${form.partnerBirthPlace}
+
 [관계의 유형]
 ${form.relationshipType}
+
 [상황 설명]
 ${form.situation}`;
 
@@ -112,34 +126,97 @@ ${form.situation}`;
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    성별
-                  </label>
-                  <select
-                    name="gender"
-                    value={form.gender}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="female">여성</option>
-                    <option value="male">남성</option>
-                  </select>
-                </div>
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-medium text-gray-800 mb-2">내 정보</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      성별
+                    </label>
+                    <select
+                      name="myGender"
+                      value={form.myGender}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="female">여성</option>
+                      <option value="male">남성</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    생년월일
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="birthDate"
-                    value={form.birthDate}
-                    onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      생년월일
+                    </label>
+                    <input
+                      type="datetime-local"
+                      name="myBirthDate"
+                      value={form.myBirthDate}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      출생지
+                    </label>
+                    <input
+                      type="text"
+                      name="myBirthPlace"
+                      value={form.myBirthPlace}
+                      onChange={handleInputChange}
+                      placeholder="예: 대한민국 서울"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-lg font-medium text-gray-800 mb-2">상대방 정보</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      성별
+                    </label>
+                    <select
+                      name="partnerGender"
+                      value={form.partnerGender}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="female">여성</option>
+                      <option value="male">남성</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      생년월일
+                    </label>
+                    <input
+                      type="datetime-local"
+                      name="partnerBirthDate"
+                      value={form.partnerBirthDate}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      출생지
+                    </label>
+                    <input
+                      type="text"
+                      name="partnerBirthPlace"
+                      value={form.partnerBirthPlace}
+                      onChange={handleInputChange}
+                      placeholder="예: 대한민국 서울"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 
